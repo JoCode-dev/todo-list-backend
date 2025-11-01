@@ -15,14 +15,84 @@ export default (router: Router) => {
    *   schemas:
    *     Todo:
    *       type: object
+   *       required:
+   *         - id
+   *         - title
+   *       properties:
+   *         id:
+   *           type: string
+   *           format: uuid
+   *           description: Identifiant unique du todo
+   *         title:
+   *           type: string
+   *           description: Titre de la tâche
+   *         description:
+   *           type: string
+   *           description: Description détaillée de la tâche
+   *         priority:
+   *           type: integer
+   *           enum: [1, 2, 3]
+   *           description: Priorité de la tâche (1=basse, 2=moyenne, 3=haute)
+   *           default: 2
+   *         completed:
+   *           type: boolean
+   *           description: Indique si la tâche est terminée
+   *           default: false
+   *         createdAt:
+   *           type: string
+   *           format: date-time
+   *           description: Date de création de la tâche
+   *         updatedAt:
+   *           type: string
+   *           format: date-time
+   *           description: Date de dernière modification de la tâche
+   *     TodoCreate:
+   *       type: object
+   *       required:
+   *         - title
    *       properties:
    *         title:
    *           type: string
+   *           description: Titre de la tâche
    *         description:
    *           type: string
+   *           description: Description détaillée de la tâche
+   *         priority:
+   *           type: integer
+   *           enum: [1, 2, 3]
+   *           description: Priorité de la tâche (1=basse, 2=moyenne, 3=haute)
+   *           default: 2
+   *     TodoUpdate:
+   *       type: object
+   *       properties:
+   *         title:
+   *           type: string
+   *           description: Titre de la tâche
+   *         description:
+   *           type: string
+   *           description: Description détaillée de la tâche
+   *         priority:
+   *           type: integer
+   *           enum: [1, 2, 3]
+   *           description: Priorité de la tâche (1=basse, 2=moyenne, 3=haute)
+   *         completed:
+   *           type: boolean
+   *           description: Indique si la tâche est terminée
+   *     ErrorResponse:
+   *       type: object
+   *       properties:
+   *         code:
+   *           type: string
+   *           description: Code d'erreur
+   *         message:
+   *           type: string
+   *           description: Message d'erreur
+   *         details:
+   *           type: object
+   *           description: Détails supplémentaires sur l'erreur
    * /todos:
    *   post:
-   *     summary: Create a new todo
+   *     summary: Créer une nouvelle tâche
    *     tags:
    *       - todos
    *     requestBody:
@@ -30,14 +100,30 @@ export default (router: Router) => {
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/Todo'
+   *             $ref: '#/components/schemas/TodoCreate'
+   *           example:
+   *             title: "Acheter du lait"
+   *             description: "Acheter du lait au supermarché"
+   *             priority: 2
    *     responses:
    *       '201':
-   *         description: Todo created successfully
+   *         description: Tâche créée avec succès
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Todo'
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: Todo created successfully
+   *                 todo:
+   *                   $ref: '#/components/schemas/Todo'
+   *       '400':
+   *         description: Données invalides
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
    */
   router.post('/todos', handleCreateTodo);
 
@@ -45,12 +131,12 @@ export default (router: Router) => {
    * @openapi
    * /todos:
    *   get:
-   *     summary: Get all todos
+   *     summary: Récupérer toutes les tâches
    *     tags:
    *       - todos
    *     responses:
    *       '200':
-   *         description: Todos retrieved successfully
+   *         description: Liste des tâches récupérée avec succès
    *         content:
    *           application/json:
    *             schema:
@@ -64,23 +150,36 @@ export default (router: Router) => {
    * @openapi
    * /todos/{id}:
    *   get:
-   *     summary: Get a todo by ID
+   *     summary: Récupérer une tâche par son ID
    *     tags:
    *       - todos
    *     parameters:
    *       - name: id
    *         in: path
    *         required: true
-   *         description: The ID of the todo to retrieve
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID de la tâche à récupérer
    *     responses:
    *       '200':
-   *         description: Todo retrieved successfully
+   *         description: Tâche récupérée avec succès
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Todo'
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: Todo found successfully
+   *                 todo:
+   *                   $ref: '#/components/schemas/Todo'
    *       '404':
-   *         description: Todo not found
+   *         description: Tâche non trouvée
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
    */
   router.get('/todos/:id', handleGetTodoById);
 
@@ -88,29 +187,53 @@ export default (router: Router) => {
    * @openapi
    * /todos/{id}:
    *   put:
-   *     summary: Update a todo by ID
+   *     summary: Mettre à jour une tâche
    *     tags:
    *       - todos
    *     parameters:
    *       - name: id
    *         in: path
    *         required: true
-   *         description: The ID of the todo to update
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID de la tâche à mettre à jour
    *     requestBody:
    *       required: true
    *       content:
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/Todo'
+   *             $ref: '#/components/schemas/TodoUpdate'
+   *           example:
+   *             title: "Acheter du lait et des œufs"
+   *             description: "Ne pas oublier les œufs bio"
+   *             priority: 3
+   *             completed: false
    *     responses:
    *       '200':
-   *         description: Todo updated successfully
+   *         description: Tâche mise à jour avec succès
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Todo'
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: Todo updated successfully
+   *                 todo:
+   *                   $ref: '#/components/schemas/Todo'
    *       '404':
-   *         description: Todo not found
+   *         description: Tâche non trouvée
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
+   *       '400':
+   *         description: Données invalides
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
    */
   router.put('/todos/:id', handleUpdateTodo);
 
@@ -118,19 +241,34 @@ export default (router: Router) => {
    * @openapi
    * /todos/{id}:
    *   delete:
-   *     summary: Delete a todo by ID
+   *     summary: Supprimer une tâche
    *     tags:
    *       - todos
    *     parameters:
    *       - name: id
    *         in: path
    *         required: true
-   *         description: The ID of the todo to delete
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID de la tâche à supprimer
    *     responses:
    *       '204':
-   *         description: Todo deleted successfully
+   *         description: Tâche supprimée avec succès
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: Todo deleted successfully
    *       '404':
-   *         description: Todo not found
+   *         description: Tâche non trouvée
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
    */
   router.delete('/todos/:id', handleDeleteTodo);
 
@@ -138,19 +276,34 @@ export default (router: Router) => {
    * @openapi
    * /todos/{id}/complete:
    *   put:
-   *     summary: Complete a todo by ID
+   *     summary: Marquer une tâche comme terminée
    *     tags:
    *       - todos
    *     parameters:
    *       - name: id
    *         in: path
    *         required: true
-   *         description: The ID of the todo to complete
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID de la tâche à marquer comme terminée
    *     responses:
    *       '204':
-   *         description: Todo completed successfully
+   *         description: Tâche terminée avec succès
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: Todo completed successfully
    *       '404':
-   *         description: Todo not found
+   *         description: Tâche non trouvée
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
    */
   router.put('/todos/:id/complete', handleCompleteTodo);
 };

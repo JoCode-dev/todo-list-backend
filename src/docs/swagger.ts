@@ -4,7 +4,7 @@ export const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Drinkeat API',
+      title: 'SUD CONTRACTORS API',
       version: '1.0.0',
       description: 'Documentation de l’API e-commerce Drinkeat',
     },
